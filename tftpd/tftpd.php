@@ -166,7 +166,7 @@ function tftpd_daemon()
 {
     /* Debug, do not fork */
     if (TFTP_LOG_LEVEL >= 10) {
-            tftpd_log('10', 'debug, not forking parent');
+        tftpd_log('10', 'debug, not forking parent');
         tftpd_listen();
         exit(0);
     }
@@ -496,12 +496,9 @@ function tftpd_recv_request($packet, &$opcode, &$request, &$mode, &$blksize, &$o
     if($options==true) {
         $blksize=$matches[4];
         $octets=$matches[5];
+        tftpd_log('1', 'blksize: '.$blksize.' octets: '.$octets);
     }
-    if ($ll <= TFTP_LOG_LEVEL) {
-        echo $id.' '.$blksize."\n";
-        echo $id.' '.$octets."\n";
-    }
-
+    
     if ($opcode == TFTP_RRQ || $opcode == TFTP_WRQ) {
         return true;
     }
