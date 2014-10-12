@@ -508,13 +508,25 @@ function tftpd_recv_request($packet, &$opcode, &$request, &$mode, &$options, &$o
     if (preg_match('/^(..)(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00/', $packet, $matches)) {
         $options=true;
     }
+    elseif (preg_match('/^(..)(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00/', $packet, $matches)) {
+        $options=true;
+    }
     elseif (preg_match('/^(..)(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00/', $packet, $matches)) {
+        $options=true;
+    }
+    elseif (preg_match('/^(..)(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00/', $packet, $matches)) {
         $options=true;
     }
     elseif (preg_match('/^(..)(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00/', $packet, $matches)) {
         $options=true;
     }
+    elseif (preg_match('/^(..)(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00/', $packet, $matches)) {
+        $options=true;
+    }
     elseif (preg_match('/^(..)(.*)\x00(.*)\x00(.*)\x00(.*)\x00/', $packet, $matches)) {
+        $options=true;
+    }
+    elseif (preg_match('/^(..)(.*)\x00(.*)\x00(.*)\x00/', $packet, $matches)) {
         $options=true;
     }
     else {
