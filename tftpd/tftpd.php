@@ -332,7 +332,7 @@ function tftpd_connect($sock, $r_buf)
         return;
     } elseif ($options==true) {
         define ('TFTP_SEGSIZE',     $optionsarray['blksize']); /* data bytes per packet */
-        tftpd_send_oack($c_sock, $sock, $optionsarray['blksize']);
+        tftpd_send_oack($c_sock, $sock, $optionsarray);
     } else {
         define ('TFTP_SEGSIZE',     '512'); /* data bytes per packet */
     }
@@ -389,14 +389,15 @@ function tftpd_receive_data($s, $sock, $s_block, &$data)
 }
 
 /* Send OACK */
-function tftpd_send_oack($s, $sock, $octets)
+function tftpd_send_oack($s, $sock, $optionsarray)
 {
-    for ($retry = 0; $retry < TFTP_RETRY; $retry++) {
-
-        /* Assemble and send ack packet */
-        $s_buf = pack('nn', TFTP_OACK, '\x00'. 'blksize'. '\x00'. $octets . '\x00');
-        tftpd_send_packet($s, $sock, $s_buf);
+    /* Assemble and send ack packet */
+    $data = '';
+    foreach ($optionsarray as $key => $value) {
+        $data .= $key . "\x00" . $value . "\x00";
     }
+    $s_buf = pack('nn', TFTP_OACK, "\x00". $data);
+    tftpd_send_packet($s, $sock, $s_buf);
 }
 
 /* Send data */
