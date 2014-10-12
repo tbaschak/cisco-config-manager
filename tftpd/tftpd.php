@@ -326,7 +326,7 @@ function tftpd_connect($sock, $r_buf)
     }
     /* Check Octets are sane if Options=true*/
     if (  $options==true && ( $octets > 65464 || $octets < 8 )) {
-        tftpd_send_nak($c_sock, $sock, TFTP_EOPTNEG, 'Option negotiation failed')
+        tftpd_send_nak($c_sock, $sock, TFTP_EOPTNEG, 'Option negotiation failed');
         socket_close($c_sock);
         return;
     } elseif ($options==true) {
