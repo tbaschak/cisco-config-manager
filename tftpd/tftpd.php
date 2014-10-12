@@ -392,12 +392,12 @@ function tftpd_receive_data($s, $sock, $s_block, &$data)
 function tftpd_send_oack($s, $sock, $optionsarray)
 {
     /* Assemble and send ack packet */
-    $data='';
+    $ldata='';
     foreach ($optionsarray as $key => $value) {
-        $data .=  $key. "\x00". $value. "\x00";
+        $ldata .=  $key. "\x00". $value. "\x00";
         print $key . " is " . $value . "\n";
     }
-    $s_buf = pack('nn', TFTP_OACK, $data);
+    $s_buf = pack('nn', TFTP_OACK, $ldata);
     tftpd_send_packet($s, $sock, $s_buf);
 }
 
