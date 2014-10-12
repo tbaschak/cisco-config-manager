@@ -505,13 +505,7 @@ function tftpd_recv_request($packet, &$opcode, &$request, &$mode, &$options, &$o
      * and PCRE function without success. Cannot seem to match the
      * work.
      */
-    if (preg_match('/^(..)(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00/', $packet, $matches))
-        $options=true;
-    elseif (preg_match('/^(..)(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00/', $packet, $matches))
-        $options=true;
-    elseif (preg_match('/^(..)(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00/', $packet, $matches))
-        $options=true;
-    elseif (preg_match('/^(..)(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00/', $packet, $matches))
+    if (preg_match('/^(..)(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00/', $packet, $matches))
         $options=true;
     elseif (preg_match('/^(..)(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00/', $packet, $matches))
         $options=true;
