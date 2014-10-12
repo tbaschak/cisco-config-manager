@@ -567,7 +567,7 @@ function tftpd_recv_time_out($s, $t)
 /* Receive packet */
 function tftpd_recv_packet($s, &$sock, &$buf)
 {
-    $r = @socket_recvfrom($s, $buf, 516, 0, $sock['p_addr'], $sock['p_port']);
+    $r = @socket_recvfrom($s, $buf, (TCP_SEGSIZE+4), 0, $sock['p_addr'], $sock['p_port']);
     tftpd_log('22', 'recv packet: '.bin2hex(substr($buf, 0, 16)));
     return $r;
 }
