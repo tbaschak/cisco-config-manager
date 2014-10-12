@@ -310,7 +310,7 @@ function tftpd_connect($sock, $r_buf)
     tftpd_log('11', 'listen: '.$sock['c_addr'].':'.$sock['c_port']);
 
     /* Parse the request */
-    if (! tftpd_recv_request($r_buf, $opcode, $request, $mode, $blksize, $octets, $options)) {
+    if (! tftpd_recv_request($r_buf, $opcode, $request, $mode, $options, $optionsarray)) {
         tftpd_log('1', 'disconnect: invalid request');
         socket_close($c_sock);
         return;
@@ -326,13 +326,13 @@ function tftpd_connect($sock, $r_buf)
         return;
     }
     /* Check Octets are sane if Options=true*/
-    if (  $options==true && ( $octets > 65464 || $octets < 8 )) {
+    if (  $options==true && ( $optionsarray['blksize'] > 65464 || $optionsarray['blksize'] < 8 )) {
         tftpd_send_nak($c_sock, $sock, TFTP_EOPTNEG, 'Option negotiation failed');
         socket_close($c_sock);
         return;
     } elseif ($options==true) {
-        define ('TFTP_SEGSIZE',     $octets); /* data bytes per packet */
-        tftpd_send_oack($c_sock, $sock, $octets);
+        define ('TFTP_SEGSIZE',     $optionsarray['blksize']); /* data bytes per packet */
+        tftpd_send_oack($c_sock, $sock, $optionsarray['blksize']);
     } else {
         define ('TFTP_SEGSIZE',     '512'); /* data bytes per packet */
     }
@@ -493,23 +493,37 @@ function tftpd_recv_ack($packet, &$opcode, &$block)
 }
 
 /* Parse received request packet */
-function tftpd_recv_request($packet, &$opcode, &$request, &$mode, &$blksize, &$octets, &$options)
+function tftpd_recv_request($packet, &$opcode, &$request, &$mode, &$options, &$optionsarray)
 {
     /* Split packet into relevant parts, tried using unpack, explode
      * and PCRE function without success. Cannot seem to match the
      * work.
      */
-    if(preg_match('/^(..)(.*)\x00(.*)\x00(.*)\x00(.*)\x00/', $packet, $matches))
+    if (preg_match('/^(..)(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00/', $packet, $matches))
+        $options=true;
+    elseif (preg_match('/^(..)(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00/', $packet, $matches))
+        $options=true;
+    elseif (preg_match('/^(..)(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00/', $packet, $matches))
+        $options=true;
+    elseif (preg_match('/^(..)(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00/', $packet, $matches))
+        $options=true;
+    elseif (preg_match('/^(..)(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00/', $packet, $matches))
+        $options=true;
+    elseif (preg_match('/^(..)(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00(.*)\x00/', $packet, $matches))
+        $options=true;
+    elseif (preg_match('/^(..)(.*)\x00(.*)\x00(.*)\x00(.*)\x00/', $packet, $matches))
         $options=true;
     elseif (preg_match('/^(..)(.*)\x00(.*)\x00/', $packet, $matches))
         $options=false;
     $opcode = hexdec(bin2hex(substr($packet, 0, 2)));
     $request = $matches[2];
     $mode = $matches[3];
-    if($options==true) {
-        $blksize=$matches[4];
-        $octets=$matches[5];
-        tftpd_log('1', 'blksize: '.$blksize.' octets: '.$octets);
+    if ($options==true) {
+        for ($i=4; $i < count($matches); $i = $i+2) {
+            $optionsarray[$matches[$i]] = $matches[$i+1];
+        }
+        print_r($optionsarray);
+        //tftpd_log('1', 'blksize: '.$blksize.' octets: '.$octets);
     }
     
     if ($opcode == TFTP_RRQ || $opcode == TFTP_WRQ) {
