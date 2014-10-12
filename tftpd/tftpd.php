@@ -394,7 +394,7 @@ function tftpd_send_oack($s, $sock, $optionsarray)
     /* Assemble and send ack packet */
     $s_buf = pack('nn', TFTP_OACK);
     foreach ($optionsarray as $key => $value) {
-        $s_buf .= pack('nn', $key, '\x00', $value, '\x00');
+        $s_buf .= pack('nn', $key, "\x00", $value, "\x00");
         print $key . " is " . $value . "\n";
     }
     tftpd_send_packet($s, $sock, $s_buf);
