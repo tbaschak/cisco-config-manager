@@ -140,7 +140,7 @@ function tftpd_recv_file($s, $sock, $fp)
         }
         $block++;
         $xfer_byte += strlen($data);
-    } while (strlen($data) == 512);
+    } while (strlen($data) == TFTP_SEGSIZE);
 
     /* Be a good citizen and churn out one last ACK */
     $s_buf = pack('nn', TFTP_ACK, $block);

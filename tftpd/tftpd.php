@@ -94,10 +94,10 @@
  * RRQ |  opc  |filename| 0 |  mode  | 0 | blksize| 0 | #octets| 0 |
  *     +-------+---~~---+---+---~~---+---+---~~---+---+---~~---+---+
  *
- *         2b     string  1b   string  1b   string   1b string   1b
- *      +-------+---~~---+---+---~~---+---+---~~---+---+---~~---+---+
- * OACK |  opc  |  opt1  | 0 | value1 | 0 |  optN  | 0 | valueN | 0 |
- *      +-------+---~~---+---+---~~---+---+---~~---+---+---~~---+---+
+ *         2b     string  1b   string  1b
+ *      +-------+---~~---+---+---~~---+---+
+ * OACK |  opc  | blksize| 0 | #octets| 0 |
+ *      +-------+---~~---+---+---~~---+---+
  *
  *  The following new Error Codes are defined:
  *
@@ -126,7 +126,8 @@ define ('TFTP_ENOUSER',     '7');   /* no such user */
 define ('TFTP_EOPTNEG',     '8');   /* Option negotiation failed */
 
 /* Connections */
-define ('TFTP_SEGSIZE',     '512'); /* data bytes per packet */
+/* TFTP_SEGSIZE defined below where its set to $octets if $options=true */
+//define ('TFTP_SEGSIZE',     '512'); /* data bytes per packet */
 define ('TFTP_RETRY',       '4');   /* max retries per packet */
 define ('TFTP_TIMEOUT',     '4');   /* timout before retry per packet */
 
@@ -308,7 +309,7 @@ function tftpd_connect($sock, $r_buf)
     tftpd_log('11', 'listen: '.$sock['c_addr'].':'.$sock['c_port']);
 
     /* Parse the request */
-    if (! tftpd_recv_request($r_buf, $opcode, $request, $mode)) {
+    if (! tftpd_recv_request($r_buf, $opcode, $request, $mode, $blksize, $octets, $options)) {
         tftpd_log('1', 'disconnect: invalid request');
         socket_close($c_sock);
         return;
@@ -322,6 +323,16 @@ function tftpd_connect($sock, $r_buf)
         tftpd_send_nak($c_sock, $sock, TFTP_EBADOP, 'unknown mode');
         socket_close($c_sock);
         return;
+    }
+    /* Check Octets are sane if Options=true*/
+    if (  $options==true && ( $octets > 65464 || $octets < 8 )) {
+        tftpd_send_nak($c_sock, $sock, TFTP_EOPTNEG, 'Option negotiation failed')
+        socket_close($c_sock);
+        return;
+    } elseif ($options==true) {
+        define ('TFTP_SEGSIZE',     $octets); /* data bytes per packet */
+    } else {
+        define ('TFTP_SEGSIZE',     '512'); /* data bytes per packet */
     }
 
     /* Sanitize request */
@@ -469,16 +480,27 @@ function tftpd_recv_ack($packet, &$opcode, &$block)
 }
 
 /* Parse received request packet */
-function tftpd_recv_request($packet, &$opcode, &$request, &$mode)
+function tftpd_recv_request($packet, &$opcode, &$request, &$mode, &$blksize, &$octets, &$options)
 {
     /* Split packet into relevant parts, tried using unpack, explode
      * and PCRE function without success. Cannot seem to match the
      * work.
      */
-    preg_match('/^(..)(.*)\x00(.*)\x00/', $packet, $matches);
+    if(preg_match('/^(..)(.*)\x00(.*)\x00(.*)\x00(.*)\x00/', $packet, $matches))
+        $options=true;
+    elseif (preg_match('/^(..)(.*)\x00(.*)\x00/', $packet, $matches))
+        $options=false;
     $opcode = hexdec(bin2hex(substr($packet, 0, 2)));
     $request = $matches[2];
     $mode = $matches[3];
+    if($options==true) {
+        $blksize=$matches[4];
+        $octets=$matches[5];
+    }
+    if ($ll <= TFTP_LOG_LEVEL) {
+        echo $id.' '.$blksize."\n";
+        echo $id.' '.$octets."\n";
+    }
 
     if ($opcode == TFTP_RRQ || $opcode == TFTP_WRQ) {
         return true;
@@ -497,7 +519,8 @@ function tftpd_send_nak($s, &$sock, $err, $msg = '')
             4   => 'Illegal TFTP operation',
             5   => 'Unknown transfer ID',
             6   => 'File already exists',
-            7   => 'No such user' );
+            7   => 'No such user',
+            8   => 'Option negotiation failed' );
 
     $buf = pack('nna*', TFTP_ERROR, $err, $tftpd_error[$err]);
     tftpd_send_packet($s, &$sock, &$buf);
