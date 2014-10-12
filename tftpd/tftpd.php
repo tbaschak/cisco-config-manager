@@ -81,6 +81,32 @@
  *      7         No such user.
  */
 
+/* From RFC 2347/2348 (see rfc2347.txt and rfc2348.txt for complete details)
+ * 
+ * RFC2347 defines a mechanism for options in a TFTP packet.
+ * RFC2348 defines a Blocksize negotiation using the above defined options.
+ *
+ * The TFTP header of a packet contains the opcode associated with
+ * that packet, as well as a blksize option definition.
+ *
+ *        2b     string  1b   string  1b   string   1b string   1b
+ * WRQ +-------+---~~---+---+---~~---+---+---~~---+---+---~~---+---+
+ * RRQ |  opc  |filename| 0 |  mode  | 0 | blksize| 0 | #octets| 0 |
+ *     +-------+---~~---+---+---~~---+---+---~~---+---+---~~---+---+
+ *
+ *         2b     string  1b   string  1b   string   1b string   1b
+ *      +-------+---~~---+---+---~~---+---+---~~---+---+---~~---+---+
+ * OACK |  opc  |  opt1  | 0 | value1 | 0 |  optN  | 0 | valueN | 0 |
+ *      +-------+---~~---+---+---~~---+---+---~~---+---+---~~---+---+
+ *
+ *  The following new Error Codes are defined:
+ *
+ *      Value     Meaning
+ *
+ *      8         Option negotiation failed.
+ *
+ */
+
 /* Opcodes */
 define('TFTP_RRQ',          '1');
 define('TFTP_WRQ',          '2');
@@ -97,6 +123,7 @@ define ('TFTP_EBADOP',      '4');   /* illegal TFTP operation */
 define ('TFTP_EBADID',      '5');   /* unknown transfer ID */
 define ('TFTP_EEXISTS',     '6');   /* file already exists */
 define ('TFTP_ENOUSER',     '7');   /* no such user */
+define ('TFTP_EOPTNEG',     '8');   /* Option negotiation failed */
 
 /* Connections */
 define ('TFTP_SEGSIZE',     '512'); /* data bytes per packet */
