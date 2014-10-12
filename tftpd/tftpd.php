@@ -395,9 +395,9 @@ function tftpd_send_oack($s, $sock, $optionsarray)
     $i=0;
     foreach ($optionsarray as $key => $value) {
         if ($i==0) {
-            $s_buf = pack('nna*', TFTP_OACK, $key."\x00".$value);
+            $s_buf = pack('nn', TFTP_OACK, $key."\x00".$value."\x00");
         } else {
-            $s_buf .= pack('nna*', $key."\x00".$value);
+            $s_buf .= pack('nn', $key."\x00".$value."\x00");
         }
         $i++;
     }
