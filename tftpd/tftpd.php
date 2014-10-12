@@ -113,6 +113,7 @@ define('TFTP_WRQ',          '2');
 define('TFTP_DATA',         '3');
 define('TFTP_ACK',          '4');
 define('TFTP_ERROR',        '5');
+define('TFTP_OACK',         '6');
 
 /* Error codes, see arpa/tftp.h */
 define ('TFTP_EUNDEF',      '0');   /* not defined */
@@ -331,6 +332,7 @@ function tftpd_connect($sock, $r_buf)
         return;
     } elseif ($options==true) {
         define ('TFTP_SEGSIZE',     $octets); /* data bytes per packet */
+        tftpd_send_oack($c_sock, $sock, $octets);
     } else {
         define ('TFTP_SEGSIZE',     '512'); /* data bytes per packet */
     }
@@ -384,6 +386,17 @@ function tftpd_receive_data($s, $sock, $s_block, &$data)
     /* We timed out */
     tftpd_log('1', 'disconnect: timeout');
     return false;
+}
+
+/* Send OACK */
+function tftpd_send_oack($s, $sock, $octets)
+{
+    for ($retry = 0; $retry < TFTP_RETRY; $retry++) {
+
+        /* Assemble and send ack packet */
+        $s_buf = pack('nn', TFTP_OACK, '\x00'. 'blksize'. '\x00'. $octets . '\x00');
+        tftpd_send_packet($s, $sock, $s_buf);
+    }
 }
 
 /* Send data */
