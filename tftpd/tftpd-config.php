@@ -1,7 +1,5 @@
 <?php
-/* $Id: tftpd-config.php,v 1.4 2005-11-22 07:07:11 adicvs Exp $
- * 
- * Copyright (C) 2005 Adi Linden <adi@adis.on.ca>
+/* Copyright (C) 2005-2014 Adi Linden <adi@adis.ca>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,22 +20,19 @@
  *                  files located in a mysql database.
  */
 
-/* Database access */
-define ('TFTP_DB',              'ccm');
-define ('TFTP_DB_HOST',         'localhost');
-define ('TFTP_DB_USER',         'ccm_user');
-define ('TFTP_DB_PASS',         'schmack');
-
-/* Include functions we need */
-require_once('../db/db.php');       /* Database functions */
-
 /* 
  *  Do NOT run this script through a browser. 
  *  Needs to be accessed from a shell.
  */
-if ($_ENV["SHELL"] != '/bin/bash' && $_ENV["SHELL"] != '/bin/sh') {
+if ($_SERVER["SHELL"] != '/bin/bash' && $_SERVER["SHELL"] != '/bin/sh') {
     die("<br><strong>This script is cannot be run through browser!</strong>");
 }
+
+/* Include configuration */
+require_once('../config.php');
+
+/* Include functions we need */
+require_once('../db/db.php');       /* Database functions */
 
 /* Handle configuration request */
 function tftpd_handle_config ($c_sock, $sock, $opcode, $mode, $path, $file)

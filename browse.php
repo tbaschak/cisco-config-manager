@@ -1,7 +1,5 @@
 <?php
-/* $Id: browse.php,v 1.1 2005-11-22 21:15:10 adicvs Exp $
- * 
- * Copyright (C) 2005 Adi Linden <adi@adis.on.ca>
+/* Copyright (C) 2005-2014 Adi Linden <adi@adis.ca>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,13 +18,14 @@
 /* browse.php   Browse the /tftpboot directory structure.
  */
 
-define('DIR_ROOT',   '/tftpboot');
+/* Include configuration */
+require_once('./config.php');
 
 /* Get path */
 if (isset($_GET['path'])) {
     $dir = sanitize($_GET['path']);
 } else {
-    $dir = DIR_ROOT;
+    $dir = TFTP_FILE_ROOT;
 }
 
 /* Download or show files */
@@ -49,7 +48,7 @@ function sanitize($path)
         exit;
     }
     /* Make sure we are within DIRROOT */
-    if (preg_match('!^'.DIR_ROOT.'!', $path) == 0) {
+    if (preg_match('!^'.TFTP_FILE_ROOT.'!', $path) == 0) {
         echo "Illegal access";
         exit;
     }

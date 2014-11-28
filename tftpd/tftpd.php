@@ -1,7 +1,5 @@
 <?php
-/* $Id: tftpd.php,v 1.6 2005-11-22 22:39:25 adicvs Exp $
- * 
- * Copyright (C) 2005 Adi Linden <adi@adis.on.ca>
+/* Copyright (C) 2005-2014 Adi Linden <adi@adis.ca>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -155,7 +153,7 @@ require_once('./tftpd-config.php'); /* Handles configuration requests */
 /*  Do NOT run this script through a browser. 
  *  Needs to be accessed from a shell.
  */
-if ($_ENV["SHELL"] != '/bin/bash' && $_ENV["SHELL"] != '/bin/sh') {
+if ($_SERVER["SHELL"] != '/bin/bash' && $_SERVER["SHELL"] != '/bin/sh') {
     die("<br><strong>This script is cannot be run through browser!</strong>");
 }
 
@@ -601,7 +599,6 @@ function tftpd_log($ll, $msg)
 
     /* Log to SYSLOG */
     if (TFTP_USE_SYSLOG && TFTP_LOG_LEVEL < 10) {
-        define_syslog_variables();
         openlog('tftpd.php', LOG_CONS | LOG_PID, LOG_DAEMON);
         if ($ll == 0) {
             syslog(LOG_ERR, $msg);

@@ -1,7 +1,5 @@
 <?php
-/* $Id: devices.php,v 1.4 2005-11-22 21:15:10 adicvs Exp $
- * 
- * Copyright (C) 2005 Adi Linden <adi@adis.on.ca>
+/* Copyright (C) 2005-2014 Adi Linden <adi@adis.ca>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,18 +19,14 @@
  *              history.
  */
 
-/* Database parameters */
-$db_parms = array(
-        'host'      => 'localhost',
-        'user'      => 'ccm_user',
-        'pass'      => 'schmack',
-        'db'        => 'ccm' );
+/* Include configuration */
+require_once('./config.php');
 
 /* Include database access library */
 require_once('./db/db.php');
 
 /* Open database connextion */
-$db = new db($db_parms['host'], $db_parms['user'], $db_parms['pass'], $db_parms['db']);
+$db = new db(TFTP_DB_HOST, TFTP_DB_USER, TFTP_DB_PASS, TFTP_DB);
 
 /* Process form vars */
 $vars = array('action','id','devicename','description','filename','password','ts','patch');
@@ -140,10 +134,12 @@ switch ($action) {
             $db->query("INSERT INTO devices (devicename,description,filename,password) 
                     VALUES ('$db_devicename','$db_description','$db_filename','$db_password')");
             $message[] = "Device added. ";
+            devices_header('List Devices',$message);
+            devices_table();
+        } else {
+            devices_header('Add New Device',$message);
+            devices_edit();
         }
-
-        devices_header(NULL,$message);
-        devices_table();
         devices_footer();
         break;
 
@@ -175,14 +171,43 @@ switch ($action) {
             $message[] = "Duplicate file name '$filename' not allowed. ";
         }
 
-        if ($message == '') {
+        if (! isset($message)) {
             /* Update database */
             $db->query("UPDATE devices SET devicename='$db_devicename',description='$db_description',
                     filename='$db_filename',password='$db_password' WHERE id='$db_id'");
             $message[] = "Device updated. ";
+            devices_header('List Devices',$message);
+            devices_table();
+        } else {
+            devices_header('Edit Device',$message);
+            devices_edit();
         }
 
-        devices_header(NULL, $message);
+        devices_footer();
+        break;
+
+    /* Delete device */
+    case 'delete':
+        unset($message);
+        if ($db_id == '') {
+            $message[] = "Bandits! This ain't supposed to be! ";
+        }
+        $n = $db->query("SELECT devicename FROM devices WHERE id='$db_id'");
+        if ($n < 1) {
+            $message[] = "Device not found! ";
+        }
+        if (! isset($message)) {
+            /* Device information */
+            $r = $db->get_row("SELECT devicename,description,filename,password FROM devices WHERE id='$id'");
+            /* Delete from tables */
+            $db->query("DELETE FROM address WHERE device='$db_id'");
+            $db->query("DELETE FROM configurations WHERE device='$db_id'");
+            $db->query("DELETE FROM devices WHERE id='$db_id'");
+            $db->query("DELETE FROM patches WHERE device='$db_id'");
+            $db->query("DELETE FROM updated WHERE device='$db_id'");
+            $message[] = "Deleted ".$r['devicename']."! ";
+        }
+        devices_header('List Devices', $message);
         devices_table();
         devices_footer();
         break;
@@ -368,13 +393,24 @@ function devices_edit($id = NULL)
     ?>
 <p>
 <form action="<?php echo $_SERVER['PHP_SELF']; ?>" method="post">
-  <p>Device Name:<br><input type="text" size="60" name="devicename" value="<?php echo $device['devicename'] ?>">
-  <p>Description:<br><input type="text" size="60" name="description" value="<?php echo $device['description'] ?>">
-  <p>File Name:<br><input type="text" size="60" name="filename" value="<?php echo $device['filename'] ?>">
+  <p>Device Name:<br><input type="text" size="60" name="devicename" value="<?php if (isset($device['devicename'])) { echo $device['devicename']; }  ?>">
+  <p>Description:<br><input type="text" size="60" name="description" value="<?php if (isset($device['description'])) { echo $device['description']; } ?>">
+  <p>File Name:<br><input type="text" size="60" name="filename" value="<?php if (isset($device['filename'])) { echo $device['filename']; } ?>">
   <p>Password:<br><input type="text" size="60" name="password" value="<?php echo $device['password'] ?>">
   <p><input type="hidden" name="action" value="<?php echo $action ?>">
     <input type="hidden" name="id" value="<?php echo $id ?>">
-    <a href="<?php echo $_SERVER['PHP_SELF']; ?>">&laquo; Back</a>&nbsp;--&nbsp;<input type="submit" value="Update &raquo;">
+    <?php
+    echo '<a href="'.$_SERVER['PHP_SELF'].'"><button type="button">&laquo; Back</button></a>';
+    echo '&nbsp;--&nbsp;';
+    if (DELETE_ON_EDIT && $id) {
+        echo '<a onclick="return confirm(\'Are you sure you want to delete device: '.$device['devicename'].'?\')" '.
+             'href="'.$_SERVER['PHP_SELF'].'?action=delete&id='.$id.'">'.
+             '<button type="button">Delete</button>'.
+             '</a>';
+        echo '&nbsp;--&nbsp;';
+    }
+    echo '<input type="submit" value="Update &raquo;">'."\n";
+    ?>
 </form>
     <?php
 }
@@ -390,24 +426,39 @@ function devices_table()
 <tr>
   <th>Device</th>
   <th>Description</th>
-  <th colspan="2">Action</th>
+<?php
+    if (DELETE_ON_LIST) {
+        echo '  <th colspan="3">Action</th>';
+    } else {
+        echo '  <th colspan="2">Action</th>';
+    }
+?>
 </tr>
 <?php
 
     /* Process each device */
+    $alt = '';
     foreach ($rows as $row) {
         if ($alt == '') {
             $alt = 'alt';
         } else {
             $alt = '';
         }
-            
-        $edit = '<a href="'.$_SERVER['PHP_SELF'].'?action=edit&id='.$row['id'].'" class="edit">Edit</a>';
-        $view = '<a href="'.$_SERVER['PHP_SELF'].'?action=view&id='.$row['id'].'" class="view">View</a>';
         echo "<tr class='".$alt."'>\n  <td>".$row['devicename']."</td>\n";
         echo "  <td>".$row['description']."</td>\n";
-        echo "  <td class='edit'>".$edit."</td>\n";
-        echo "  <td class='view'>".$view."</td>\n<tr>\n";
+        echo "  <td class='edit'>".
+            '<a href="'.$_SERVER['PHP_SELF'].'?action=edit&id='.$row['id'].'" class="edit">Edit</a>'.
+            "</td>\n";
+        echo "  <td class='view'>".
+            '<a href="'.$_SERVER['PHP_SELF'].'?action=view&id='.$row['id'].'" class="view">View</a>'.
+            "</td>\n";
+        if (DELETE_ON_LIST) {
+            echo "  <td class='dele'>".
+                '<a onclick="return confirm(\'Are you sure you want to delete device: '.$row['devicename'].'?\')" '.
+                'href="'.$_SERVER['PHP_SELF'].'?action=delete&id='.$row['id'].'" class="dele">Delete</a>'.
+                "</td>\n";
+        }
+        echo "<tr>\n";
     }
     
 ?>
@@ -430,7 +481,7 @@ function devices_header($subtitle = 'List Devices', $message = array())
 <?php
     foreach ($message as $s) :
 ?>
-<strong><?php echo $s; ?></strong><br>
+<strong><font color="red"><?php echo $s; ?></font></strong><br>
 <?php
     endforeach;
 }
@@ -495,6 +546,9 @@ function devices_css()
       text-align: center;
     }
     td.view {
+      text-align: center;
+    }
+    td.dele {
       text-align: center;
     }
     th {

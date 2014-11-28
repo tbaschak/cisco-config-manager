@@ -1,7 +1,5 @@
 <?php
-/* $Id: tftpd-file.php,v 1.3 2005-11-25 17:11:29 adicvs Exp $
- * 
- * Copyright (C) 2005 Adi Linden <adi@adis.on.ca>
+/* Copyright (C) 2005-2014 Adi Linden <adi@adis.ca>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,17 +20,16 @@
  *                  file system. 
  */
 
-/* File access */
-define ('TFTP_FILE_RO',     TRUE);          /* cannot write files if true */
-define ('TFTP_FILE_DIR',    '/tftpboot');   /* directory we operate in */
-
 /* 
  *  Do NOT run this script through a browser. 
  *  Needs to be accessed from a shell.
  */
-if ($_ENV["SHELL"] != '/bin/bash' && $_ENV["SHELL"] != '/bin/sh') {
+if ($_SERVER["SHELL"] != '/bin/bash' && $_SERVER["SHELL"] != '/bin/sh') {
     die("<br><strong>This script is cannot be run through browser!</strong>");
 }
+
+/* Include configuration */
+require_once('../config.php');
 
 /* Handle file requests */
 function tftpd_handle_file ($c_sock, $sock, $opcode, $mode, $path, $file)
@@ -139,6 +136,9 @@ function tftpd_recv_file($s, $sock, $fp)
             return false;
         }
         $block++;
+        if ($block > 65535) {
+            $block = 0;
+        }
         $xfer_byte += strlen($data);
     } while (strlen($data) == TFTP_SEGSIZE);
 
@@ -163,6 +163,9 @@ function tftpd_send_file($s, $sock, $fp)
             return false;
         }
         $block++;
+        if ($block > 65535) {
+            $block = 0;
+        }
         $xfer_byte += strlen($data);
     }
 
